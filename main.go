@@ -6,8 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"testbot.com/TestBot/bot"
-	"testbot.com/TestBot/config"
+	"github.com/Games-Gamers/StarBot/bot"
+	"github.com/Games-Gamers/StarBot/config"
 )
 
 func main() {

@@ -1,4 +1,4 @@
-module testbot.com/TestBot
+module github.com/Games-Gamers/StarBot
 
 go 1.17
 
