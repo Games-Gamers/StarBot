@@ -28,7 +28,7 @@ func Start() {
 
 	BotID = u.ID
 
-	goBot.AddHandler(famHandler)
+	// goBot.AddHandler(famHandler)
 	goBot.AddHandler(starboardHandler)
 
 	err = goBot.Open()
