@@ -1,16 +1,11 @@
 # syntax=docker/dockerfile:1
 
-FROM golang
+FROM arm32v7/golang:1.17.2
 
-WORKDIR /app
-
-COPY go.mod ./
-COPY go.sum ./
-
-RUN go mod download
-
+WORKDIR /go/src/app
 COPY . .
 
-RUN env GOOS=linux GOARCH=arm GOARM=5 go build -o StarBot
+RUN go get -d -v ./...
+RUN go install -v ./...
 
-CMD ["./StarBot"]
+CMD ["StarBot"]
