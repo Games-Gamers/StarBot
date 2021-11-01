@@ -20,13 +20,8 @@ func main() {
 
 	bot.Start()
 
-	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		bot.Stop()
-		os.Exit(0)
-	}()
-	<-make(chan struct{})
-
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	<-c
+	bot.Stop()
 }

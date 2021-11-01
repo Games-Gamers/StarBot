@@ -38,6 +38,7 @@ func Start() {
 	}
 
 	goBot.ChannelMessageSend(config.LoggingChannel, "I am alive!")
+	goBot.UserUpdateStatus(discordgo.StatusOnline)
 
 	fmt.Println("Bot is running!")
 }
