@@ -6,15 +6,38 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/joho/godotenv"
+
 	"github.com/Games-Gamers/StarBot/bot"
-	"github.com/Games-Gamers/StarBot/config"
 )
 
 func main() {
-	err := config.ReadConfig()
-
+	// Load the .env file
+	err := godotenv.Load()
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println("Error loading .env file")
+		return
+	}
+
+	// check the contents of the loaded .env
+	_, exists := os.LookupEnv("Token")
+	if !exists {
+		fmt.Println("Token value not found in .env")
+		return
+	}
+	_, exists = os.LookupEnv("StarboardChannel")
+	if !exists {
+		fmt.Println("StarboardChannel value not found in .env")
+		return
+	}
+	_, exists = os.LookupEnv("LoggingChannel")
+	if !exists {
+		fmt.Println("LoggingChannel value not found in .env")
+		return
+	}
+	_, exists = os.LookupEnv("GuildID")
+	if !exists {
+		fmt.Println("GuildID value not found in .env")
 		return
 	}
 
@@ -23,5 +46,5 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-c
-	bot.Stop()
+	// bot.Stop()
 }
