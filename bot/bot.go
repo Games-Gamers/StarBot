@@ -12,6 +12,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+var logg *log.Logger = log.New(os.Stdout, "Info: ", log.Ldate|log.Ltime|log.Lshortfile)
+
 type UserFields []*discordgo.MessageEmbedField
 
 func (uf UserFields) Len() int      { return len(uf) }
@@ -35,17 +37,21 @@ var (
 		},
 	}
 
+	registeredCommands = make([]*discordgo.ApplicationCommand, len(commands))
+
 	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
 		"stars": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			fields := UserFields{}
+			// Grab all the guild members for looking up usernames and nicknames
 			members, err := goBot.GuildMembers(os.Getenv("GuildID"), "", 1000)
 			if err != nil {
-				fmt.Println(err)
+				logg.Println(err)
 				return
 			}
 			for k, v := range stars {
 				username := ""
 				for _, m := range members {
+					// Grab a name based on the id. Nickname if present, otherwise their username
 					if m.User.ID == k {
 						if m.Nick != "" {
 							username = m.Nick
@@ -54,24 +60,18 @@ var (
 						}
 					}
 				}
-				if username == "" {
+				if username == "" { // Deleted user or something, skip
 					continue
 				}
+				// Should now have a username as the title and the number of stars as the value
 				fields = append(fields, &discordgo.MessageEmbedField{
 					Name:   username,
 					Value:  strconv.Itoa(v),
 					Inline: true,
 				})
 			}
-			for _, v := range fields {
-				fmt.Printf("%s: %s |", v.Name, v.Value)
-			}
-			fmt.Println()
+			// Sort so the largest number of stars are at the front
 			sort.Sort(fields)
-			for _, v := range fields {
-				fmt.Printf("%s: %s |", v.Name, v.Value)
-			}
-			fmt.Println()
 			payload := &discordgo.MessageEmbed{
 				Fields: fields,
 			}
@@ -92,30 +92,30 @@ func Start() {
 	var err error
 	goBot, err = discordgo.New("Bot " + os.Getenv("Token"))
 	if err != nil {
-		fmt.Println(err.Error())
+		logg.Println(err.Error())
 		return
 	}
 
 	u, err := goBot.User("@me")
 	if err != nil {
-		fmt.Println(err.Error())
+		logg.Println(err.Error())
 	}
 
 	BotID = u.ID
 
-	// goBot.AddHandler(famHandler)
 	goBot.AddHandler(starboardHandler)
 
 	err = goBot.Open()
 	if err != nil {
-		fmt.Println(err.Error())
+		logg.Println(err.Error())
 		return
 	}
 
 	// Get all the historical stars and store them locally
+	logg.Println("Populating historical stars")
 	lastMessages, err := goBot.ChannelMessages(os.Getenv("StarboardChannel"), 100, "", "", "") // last 100 messages
 	if err != nil {
-		fmt.Println(err)
+		logg.Println(err)
 		return
 	}
 	earliestID := "999999999999999999"
@@ -148,7 +148,7 @@ func Start() {
 			re := regexp.MustCompile("⭐ ([0-9]+)")
 			starCnt, err := strconv.Atoi(re.FindStringSubmatch(emb.Footer.Text)[1])
 			if err != nil {
-				fmt.Println(err)
+				logg.Println(err)
 				continue
 			}
 
@@ -158,17 +158,17 @@ func Start() {
 		// Get the next 100 messages from before the earliest id in this batch
 		lastMessages, err = goBot.ChannelMessages(os.Getenv("StarboardChannel"), 100, earliestID, "", "")
 		if err != nil {
-			fmt.Println(err)
+			logg.Println(err)
 			break
 		}
 	}
 
+	// Register the slash commands
 	goBot.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
 			h(s, i)
 		}
 	})
-	registeredCommands := make([]*discordgo.ApplicationCommand, len(commands))
 	for i, v := range commands {
 		cmd, err := goBot.ApplicationCommandCreate(goBot.State.User.ID, os.Getenv("GuildID"), v)
 		if err != nil {
@@ -179,42 +179,46 @@ func Start() {
 
 	goBot.ChannelMessageSend(os.Getenv("LoggingChannel"), "I am alive!")
 
-	fmt.Println("Bot is running!")
+	logg.Println("Bot is running!")
 }
 
 func Stop() {
+	for _, v := range registeredCommands {
+		goBot.ApplicationCommandDelete(goBot.State.User.ID, os.Getenv("GuildID"), v.ID)
+	}
+
 	goBot.ChannelMessageSend(os.Getenv("LoggingChannel"), "Attention... I have been murdered.")
 	err := goBot.Close()
 	if err != nil {
-		fmt.Println(err.Error())
+		logg.Println(err.Error())
 		return
 	}
-	fmt.Println("\rBot shutting down")
+	logg.Println("\rBot shutting down")
 }
 
 func starboardHandler(s *discordgo.Session, mr *discordgo.MessageReactionAdd) {
 
 	message, err := s.ChannelMessage(mr.ChannelID, mr.MessageID)
 	if err != nil {
-		fmt.Println(err)
+		logg.Println(err)
 		return
 	}
 
 	channel, err := s.Channel(mr.ChannelID)
 	if err != nil {
-		fmt.Println(err)
+		logg.Println(err)
 		return
 	}
 
 	user, err := s.User(message.Author.ID)
 	if err != nil {
-		fmt.Println(err)
+		logg.Println(err)
 		return
 	}
 
 	guild, err := s.Guild(mr.GuildID)
 	if err != nil {
-		fmt.Println(err)
+		logg.Println(err)
 		return
 	}
 
@@ -283,7 +287,7 @@ func starboardHandler(s *discordgo.Session, mr *discordgo.MessageReactionAdd) {
 		// Search the starboard channel to see if this message has been starred before
 		lastMessages, err := s.ChannelMessages(os.Getenv("StarboardChannel"), 100, "", "", "")
 		if err != nil {
-			fmt.Println(err)
+			logg.Println(err)
 			return
 		}
 		existingMessage := ""
