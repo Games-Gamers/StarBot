@@ -312,5 +312,7 @@ func starboardHandler(s *discordgo.Session, mr *discordgo.MessageReactionAdd) {
 		} else if message.Author.ID != mr.UserID { // If the message hasn't been sent to the starboard before AND OP didn't star their own message, make a new post
 			goBot.ChannelMessageSendComplex(os.Getenv("StarboardChannel"), &discordgo.MessageSend{Embed: payload})
 		}
+		// Increment their star count in our local count cache
+		stars[message.Author.ID]++
 	}
 }
