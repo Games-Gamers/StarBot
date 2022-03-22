@@ -177,7 +177,7 @@ func Start() {
 		registeredCommands[i] = cmd
 	}
 
-	// goBot.ChannelMessageSend(os.Getenv("LoggingChannel"), "I am alive!")
+	goBot.ChannelMessageSend(os.Getenv("LoggingChannel"), "I am alive!")
 
 	fmt.Println("Bot is running!")
 }
