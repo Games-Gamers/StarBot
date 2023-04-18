@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -119,6 +120,7 @@ func Start() {
 		return
 	}
 	earliestID := "999999999999999999"
+	earliestTS := time.Unix(1<<63-62135596801, 999999999)
 	for len(lastMessages) > 0 {
 		for _, msg := range lastMessages {
 			// Get all the historical starbot messages
@@ -129,8 +131,9 @@ func Start() {
 			}
 
 			// Figure out if this message is newer than the previous for future fetching
-			if msg.ID < earliestID { // assumes IDs are incremental
+			if msg.Timestamp.Before(earliestTS) { 
 				earliestID = msg.ID
+				earliestTS = msg.Timestamp
 			}
 
 			name := ""
