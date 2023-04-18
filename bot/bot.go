@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
