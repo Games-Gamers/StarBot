@@ -15,7 +15,7 @@ var logg *log.Logger = log.New(os.Stdout, "Info: ", log.Ldate|log.Ltime|log.Lsho
 
 func main() {
 	// Load the .env file
-	_ := godotenv.Load()
+	godotenv.Load()
 
 	// check the contents of the loaded .env
 	_, exists := os.LookupEnv("Token")
