@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"errors"
 	"os"
 	"os/signal"
 	"syscall"
