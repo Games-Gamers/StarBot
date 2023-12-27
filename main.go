@@ -16,13 +16,7 @@ var logg *log.Logger = log.New(os.Stdout, "Info: ", log.Ldate|log.Ltime|log.Lsho
 
 func main() {
 	// Load the .env file
-	err := godotenv.Load()
-	if err != nil {
-		logg.Println("Error loading .env file")
-		if !errors.Is(err, os.ErrNotExist) {
-			return
-		}
-	}
+	_ := godotenv.Load()
 
 	// check the contents of the loaded .env
 	_, exists := os.LookupEnv("Token")
